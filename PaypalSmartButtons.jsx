@@ -4,7 +4,6 @@ import { func, shape, string } from 'prop-types';
 import RadioInput from '../../components/common/Form/RadioInput';
 import { __ } from '../../i18n';
 import { config } from '../../config';
-import { placeOrderRequest } from '../../api';
 import { GraphQLResponseException } from '../../api/utility';
 import { _isObjEmpty } from '../../utils';
 import { isCartAddressValid } from '../../utils/address';
@@ -19,6 +18,7 @@ import {
   setSmartButtonsPayment,
 } from './api';
 import loadPaypalSdk from './sdk';
+import { placeOrderOrThrow } from './graphql';
 
 /**
  * PayPal Smart Buttons (Adobe Payment Services) for the Hyvä React Checkout.
@@ -122,13 +122,9 @@ function PaypalSmartButtons({ method, selected, actions }) {
                 payments_order_id: paymentsOrder.current.paymentsOrderId,
                 paypal_order_id: data.orderID,
               });
-              const order = await placeOrderRequest(appDispatch);
-              if (order?.order_number) {
-                LocalStorage.clearCheckoutStorage();
-                window.location.replace(config.successPageRedirectUrl);
-                return;
-              }
-              throw new Error(__('Your order could not be placed.'));
+              await placeOrderOrThrow(appDispatch);
+              LocalStorage.clearCheckoutStorage();
+              window.location.replace(config.successPageRedirectUrl);
             } catch (error) {
               setPageLoader(false);
               showError(error, __('Your order could not be placed.'));

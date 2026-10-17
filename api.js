@@ -1,5 +1,6 @@
 import sendRequest from '../../api/sendRequest';
 import LocalStorage from '../../utils/localStorage';
+import { sendOrThrow } from './graphql';
 
 export const METHOD = 'payment_services_paypal_smart_buttons';
 
@@ -49,10 +50,12 @@ export async function fetchSmartButtonsConfig(dispatch) {
  * @returns {Promise<{id: string, mp_order_id: string}>} PayPal order id + Payment Services order id
  */
 export async function createPaymentOrder(dispatch, paymentSource) {
-  const response = await sendRequest(dispatch, {
-    query: CREATE_PAYMENT_ORDER_MUTATION,
-    variables: { cartId: LocalStorage.getCartId(), paymentSource },
-  });
+  const response = await sendOrThrow(
+    dispatch,
+    CREATE_PAYMENT_ORDER_MUTATION,
+    { cartId: LocalStorage.getCartId(), paymentSource },
+    'createPaymentOrder'
+  );
   const order = response?.data?.createPaymentOrder;
   if (!order?.id) {
     throw new Error('PayPal could not start the payment. Please try again.');
@@ -61,8 +64,10 @@ export async function createPaymentOrder(dispatch, paymentSource) {
 }
 
 export function setSmartButtonsPayment(dispatch, data) {
-  return sendRequest(dispatch, {
-    query: SET_PAYMENT_MUTATION,
-    variables: { cartId: LocalStorage.getCartId(), data },
-  });
+  return sendOrThrow(
+    dispatch,
+    SET_PAYMENT_MUTATION,
+    { cartId: LocalStorage.getCartId(), data },
+    'setPaymentMethodOnCart'
+  );
 }
